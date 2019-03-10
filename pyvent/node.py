@@ -15,7 +15,7 @@ class Node():
 
     defaults = {
         'server': True,
-        'id': 'pymitter',
+        'id': 'pyvent',
         'address': '0.0.0.0',
         'port': 52002,
     }
@@ -65,7 +65,7 @@ class Node():
             log.info(f"Starting Client '{self.options['id']}'")
             self.client.start(id=self.options['id'], wait=True)
 
-    def connect(self, signal, callback=None, sender='pymitter', weak=True):
+    def connect(self, signal, callback=None, sender='pyvent', weak=True):
         # Allow for decorators
         if callback is None:
             return partial(self.connect, signal, sender=sender, weak=False)
@@ -75,14 +75,14 @@ class Node():
         dispatcher.connect(callback, signal=signal, sender=sender, weak=weak)
         return callback
 
-    def disconnect(self, callback, signal=Any, sender='pymitter', weak=True):
+    def disconnect(self, callback, signal=Any, sender='pyvent', weak=True):
         dispatcher.disconnect(signal=signal, receiver=callback, sender=sender, weak=weak)
 
     def send(self, signal, **kargs):
         self.try_start()
         return self.client.send(signal, **kargs)
 
-    def wait_for(self, signal, sender='pymitter', timeout=0, send=None):
+    def wait_for(self, signal, sender='pyvent', timeout=0, send=None):
         self.try_start()
         return self.client.wait_for(signal=signal, sender=sender, timeout=timeout, send=send)
 

@@ -2,4 +2,4 @@ __pycache__
 
 build
 dist
-pymitter.egg-info
+*.egg-info

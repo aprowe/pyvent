@@ -37,7 +37,7 @@ class Client(Thread):
     def wait_for_server(self):
         return self.check(10)
 
-    def wait_for(self, signal, sender='pymitter', timeout=0, send=None):
+    def wait_for(self, signal, sender='pyvent', timeout=0, send=None):
         ret_val = None, None
 
         def fn(*args, **kargs):
@@ -61,7 +61,7 @@ class Client(Thread):
 
     def start(self, id=None, wait=True):
         if not id:
-            id = f'pymitter.{hex(id(self))}'
+            id = f'pyvent.{hex(id(self))}'
         self.id = id
 
         # Start sub thread

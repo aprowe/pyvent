@@ -1,5 +1,5 @@
 import time
-from pymitter.node import Node
+from pyvent.node import Node
 import nose.tools as nt
 from multiprocessing import Process, Value
 

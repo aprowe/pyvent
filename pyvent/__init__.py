@@ -1,5 +1,5 @@
 '''
-Pymitter IPC
+Pyvent IPC
 '''
 
 from . node import Node
@@ -30,7 +30,7 @@ def is_server():
 
 
 def start_server(port=None, address=None):
-    '''Starts the pymitter server thread'''
+    '''Starts the pyvent server thread'''
     return node.start_server(port, address)
 
 
@@ -39,7 +39,7 @@ def try_start():
     return node.try_start()
 
 
-def connect(signal, callback=None, sender='pymitter', weakref=True):
+def connect(signal, callback=None, sender='pyvent', weakref=True):
     '''
     Subscribes to a message. Can be used as a decorator.
     '''

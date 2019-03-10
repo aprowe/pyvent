@@ -1,6 +1,6 @@
-# Pymitter
+# Pyvent
 
-Pymitter is a dead-simple IPC to use that uses ZMQ and PyDispatcher under the hood.
+Pyvent is a dead-simple IPC to use that uses ZMQ and PyDispatcher under the hood.
 
 ## Usage
 
@@ -8,9 +8,9 @@ Pymitter is a dead-simple IPC to use that uses ZMQ and PyDispatcher under the ho
 
 ```python
 # script1.py
-import pymitter
+import pyvent
 
-@pymitter.connect('order-food')
+@pyvent.connect('order-food')
 def order(food, drink='water'):
   print(f'You ordered {food} and {drink}!')
 ```
@@ -18,9 +18,9 @@ def order(food, drink='water'):
 
 ```python
 # script2.py
-import pymitter
+import pyvent
 
-pymitter.send('order-food', food='sushi', drink='sake')
+pyvent.send('order-food', food='sushi', drink='sake')
 ```
 
 ```shell
