@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='pyvent',
-    version='0.1.0',
+    version='0.1.1',
     description='IPC over ZMQ, made easy',
     long_description=long_description,
     author='Alexander Rowe',
