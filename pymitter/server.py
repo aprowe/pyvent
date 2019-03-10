@@ -16,7 +16,6 @@ class Server(Thread):
         self.should_stop = False
 
     def run(self):
-        log.info(f'Starting server on port {self.port}')
         self.ctx = zmq.Context()
 
         self.rep = self.ctx.socket(zmq.REP)

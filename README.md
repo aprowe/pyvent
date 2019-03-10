@@ -1,6 +1,10 @@
 # Pymitter
 
-Pymitter is a dead-simple IPC to use that uses ZMQ under the hood.
+Pymitter is a dead-simple IPC to use that uses ZMQ and PyDispatcher under the hood.
+
+## Usage
+
+### Basic
 
 ```python
 # script1.py

@@ -1,5 +1,6 @@
 import zmq
 import logging
+import time
 
 from pydispatch import dispatcher
 from threading import Thread
@@ -20,70 +21,61 @@ class Client(Thread):
         self.should_stop = False
 
         self.ctx = zmq.Context()
-        self.req = self.ctx.socket(zmq.REQ)
-        self.sub = self.ctx.socket(zmq.SUB)
-        self.req.setsockopt(zmq.RCVTIMEO, 10)
-        self.sub.setsockopt(zmq.RCVTIMEO, 10)
-        self.subscribe('__')
 
-    def check(self):
-        if self.is_alive():
-            return self.send('__check')
+        self.req_endpoint = f"tcp://{self.address}:{self.port}"
+        self.sub_endpoint = f"tcp://{self.address}:{self.port+1}"
 
-        req = self.ctx.socket(zmq.REQ)
-        req.setsockopt(zmq.RCVTIMEO, 10)
+        self.start_req()
 
-        # Try to connect
-        try:
-            req.connect(f"tcp://{self.address}:{self.port}")
-
-        # Connection failed, no server
-        except zmq.error.ZMQError:
-            return False
-
-        # Connection succeed, send check pyaload
-        try:
-            req.send(b'__check')
-            if req.recv() == ACK:
+    def check(self, rep=1):
+        for i in range(rep):
+            if self.send('__check', id=id(self)):
                 return True
-
-        # Any Error
-        except zmq.Again:
-            return False
-
-        # Disconnect
-        finally:
-            req.close()
 
         return False
 
     def wait_for_server(self):
-        checked = False
+        return self.check(10)
 
-        def fn():
-            nonlocal checked
-            checked = True
+    def wait_for(self, signal, sender='pymitter', timeout=0, send=None):
+        ret_val = None, None
 
-        dispatcher.connect(fn, signal='__check')
+        def fn(*args, **kargs):
+            nonlocal ret_val
+            ret_val = (args, kargs)
+        dispatcher.connect(receiver=fn, signal=signal, sender=sender, weak=False)
+        self.subscribe(signal)
 
-        for i in range(10):
-            self.send('__check')
+        if send:
+            self.send(**send)
 
-            if checked:
+        time_started = time.time()
+        while not ret_val[0] and self.is_alive():
+            if timeout and time.time() - time_started > timeout:
+                log.info(f'Wait for {signal} timed out')
                 break
 
-        dispatcher.disconnect(fn, signal='__check')
+        dispatcher.disconnect(receiver=fn, signal=signal, sender=sender, weak=False)
+
+        return ret_val
 
     def start(self, id=None, wait=True):
+        if not id:
+            id = f'pymitter.{hex(id(self))}'
+        self.id = id
+
+        # Start sub thread
         super().start()
 
-        self.id = id
+        # Start req socket
+        self.start_req(reset=True)
+
+        # Wait for server and send connect
         wait and self.wait_for_server()
         self.send('__connect', id=self.id)
 
     def run(self):
-        self.req.connect(f"tcp://{self.address}:{self.port}")
-        self.sub.connect(f"tcp://{self.address}:{self.port + 1}")
+        self.start_sub()
 
         self.should_stop = False
         while not self.should_stop:
@@ -97,28 +89,51 @@ class Client(Thread):
             payload.setdefault('sender', self.id)
             dispatcher.send(signal=topic, **payload)
 
-        self.req.disconnect(f"tcp://{self.address}:{self.port}")
-        self.sub.disconnect(f"tcp://{self.address}:{self.port + 1}")
+        self.sub.disconnect(self.sub_endpoint)
 
-    def send(self, topic, **kargs):
+    def send(self, signal, **kargs):
         try:
-            self.req.send(marshall(topic, kargs))
+            self.req.send(marshall(signal, kargs))
             return self.req.recv() == ACK
         except zmq.Again:
-            log.error(f"Client could not send message: {topic}")
+            log.error(f"Client could not send message: {signal}")
+
+        except zmq.ZMQError:
+            log.error(f"Client could not send message: {signal}")
+            self.start_req(True)
 
         return False
 
     def subscribe(self, sub=''):
         self.sub.setsockopt_string(zmq.SUBSCRIBE, sub)
 
+    def start_req(self, reset=False):
+        if reset:
+            self.req.close()
+
+        self.req = self.ctx.socket(zmq.REQ)
+        self.req.setsockopt(zmq.RCVTIMEO, 50)
+        self.req.connect(self.req_endpoint)
+
+    def start_sub(self, reset=False):
+        if reset:
+            self.sub.close()
+
+        self.sub = self.ctx.socket(zmq.SUB)
+        self.sub.setsockopt(zmq.RCVTIMEO, 10)
+        self.sub.connect(self.sub_endpoint)
+        self.subscribe('__')
+
     def __del__(self):
         self.stop()
 
     def stop(self):
-        if not self.is_alive():
-            return
+        # Wait for Sub to stop
+        if self.is_alive():
+            self.should_stop = True
+            self.join()
 
-        # self.send('__disconnect', id=self.id)
-        self.should_stop = True
-        self.join()
+        return
+        # disconnect req
+        self.send('__disconnect')
+        self.req.disconnect(self.req_endpoint)
