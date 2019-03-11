@@ -25,7 +25,13 @@ def configure(**kargs):
 
 
 def is_server():
-    '''Returns whether or not this process is running a server'''
+    '''Returns whether this process has a running server
+
+    .. seealso::
+        :py:meth:`pyvent.node.Node.is_server`
+
+    :rtype: bool
+    '''
     return node.is_server()
 
 

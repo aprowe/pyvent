@@ -1,3 +1,5 @@
+'''Node Class'''
+
 from pydispatch import dispatcher
 from functools import partial
 from logging import getLogger
@@ -9,6 +11,9 @@ from . server import Server
 log = getLogger(__name__)
 
 class Node():
+    '''
+    Primary class that contains a server and client.
+    '''
 
     Any = dispatcher.Any
     Anonymous = dispatcher.Anonymous
@@ -36,9 +41,33 @@ class Node():
         }
 
     def is_server(self):
+        '''returns whether this node has a running server
+
+        Node can be either a server, client or both. The first
+        node to be started will also start server. This function
+        will check if it is the server node
+
+        :param self:
+        :rtype: bool
+        '''
+
         return self.server.is_alive()
 
     def start_server(self, port=None, address=None):
+        '''Starts the pyvent server
+
+        If it is already running, does nothing
+
+        .. note:: This will be automatically called with :meth:`pyvent.node.Node.connect` and
+            :meth:`pyvent.node.Node.send`
+
+        :param port: The port to bind to
+        :param address: The address to bind to
+        :type port: int
+        :type address: str
+        :rtype: None
+        '''
+
         if self.server.is_alive():
             log.warning("Server is already running")
             return
@@ -54,6 +83,19 @@ class Node():
         self.server.start()
 
     def try_start(self):
+        '''Attempts to start a client and server if needed
+
+        Checks if a pyvent server is running, if it is, it creates a Client
+        and connects to that. If a server is not running, it creates a server
+        and then creates a client.
+
+        If it is already running, does nothing
+
+        .. note:: This will be automatically called with :meth:`pyvent.node.Node.connect` and
+            :meth:`pyvent.node.Node.send`
+
+        :rtype: None
+        '''
         # Create server
         if self.options['server'] and not self.client.check():
             log.info(f"Starting server on '{self.options['id']}'")
