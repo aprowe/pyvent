@@ -39,11 +39,11 @@ def try_start():
     return node.try_start()
 
 
-def connect(signal, callback=None, sender='pyvent', weakref=True):
+def connect(signal, callback=None, sender='pyvent', weak=True):
     '''
     Subscribes to a message. Can be used as a decorator.
     '''
-    return node.connect(signal, callback, sender=sender, weakref=weakref)
+    return node.connect(signal, callback, sender=sender, weak=weak)
 
 
 def send(topic, **kargs):
